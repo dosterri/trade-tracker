@@ -1,0 +1,158 @@
+# Baut iOS (unsignierte IPA für Sideloadly) und/oder Windows.
+# Start: GitHub → Actions → "Build" → "Run workflow"  – oder per Tag v*.
+# macOS-Minuten zählen in privaten Repos 10-fach, daher nicht bei jedem Push.
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Plattform
+        type: choice
+        options: [beide, ios, windows]
+        default: beide
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: 3.47.5
+
+jobs:
+  ios:
+    name: iOS (unsignierte IPA)
+    if: github.event_name == 'push' || inputs.platform != 'windows'
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Konfiguration aus GitHub Secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          COINGECKO_DEMO_KEY: ${{ secrets.COINGECKO_DEMO_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "## ❌ Secrets fehlen: SUPABASE_URL und/oder SUPABASE_PUBLISHABLE_KEY" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          mkdir -p env
+          printf '{"SUPABASE_URL":"%s","SUPABASE_PUBLISHABLE_KEY":"%s","COINGECKO_DEMO_KEY":"%s"}' \
+            "$SUPABASE_URL" "$SUPABASE_PUBLISHABLE_KEY" "$COINGECKO_DEMO_KEY" > env/ci.json
+
+      - name: Abhängigkeiten
+        run: flutter pub get
+
+      - name: flutter build ios --no-codesign
+        run: |
+          set -o pipefail
+          flutter build ios --release --no-codesign \
+            --dart-define-from-file=env/ci.json 2>&1 | tee build.log
+
+      - name: IPA packen (Payload zippen)
+        run: |
+          cd build/ios/iphoneos
+          rm -rf Payload && mkdir Payload
+          cp -R Runner.app Payload/
+          zip -qry "$GITHUB_WORKSPACE/TradeTracker.ipa" Payload
+          ls -lh "$GITHUB_WORKSPACE/TradeTracker.ipa"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: TradeTracker-iOS-${{ github.run_number }}
+          path: TradeTracker.ipa
+          retention-days: 14
+
+      - name: Zusammenfassung
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "## ✅ iOS-Build erfolgreich" >> "$GITHUB_STEP_SUMMARY"
+            echo "Artifact **TradeTracker-iOS-${{ github.run_number }}** herunterladen, entpacken, IPA in Sideloadly ziehen." >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "## ❌ iOS-Build fehlgeschlagen"
+              echo "Bitte diesen Block kopieren und an Claude schicken:"
+              echo '```'
+              if [ -f build.log ]; then
+                grep -E "error:|Error:|Error \(Xcode\)|Failed|FAILED|Exception|Could not" build.log \
+                  | grep -v "^\s*$" | head -80
+              else
+                echo "Kein build.log – Fehler vor dem Build-Schritt (siehe Job-Log)."
+              fi
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  windows:
+    name: Windows
+    if: github.event_name == 'push' || inputs.platform != 'ios'
+    runs-on: windows-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Konfiguration aus GitHub Secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          COINGECKO_DEMO_KEY: ${{ secrets.COINGECKO_DEMO_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "## ❌ Secrets fehlen: SUPABASE_URL und/oder SUPABASE_PUBLISHABLE_KEY" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          mkdir -p env
+          printf '{"SUPABASE_URL":"%s","SUPABASE_PUBLISHABLE_KEY":"%s","COINGECKO_DEMO_KEY":"%s"}' \
+            "$SUPABASE_URL" "$SUPABASE_PUBLISHABLE_KEY" "$COINGECKO_DEMO_KEY" > env/ci.json
+
+      - name: Abhängigkeiten
+        run: flutter pub get
+
+      - name: flutter build windows
+        run: |
+          set -o pipefail
+          flutter build windows --release --dart-define-from-file=env/ci.json 2>&1 | tee build.log
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: TradeTracker-Windows-${{ github.run_number }}
+          path: build/windows/x64/runner/Release/
+          retention-days: 14
+
+      - name: Zusammenfassung
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "## ✅ Windows-Build erfolgreich" >> "$GITHUB_STEP_SUMMARY"
+            echo "Artifact entpacken und **trade_tracker.exe** starten (ganzen Ordner behalten)." >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "## ❌ Windows-Build fehlgeschlagen"
+              echo '```'
+              if [ -f build.log ]; then
+                grep -iE "error|exception|failed" build.log | head -80
+              else
+                echo "Kein build.log – Fehler vor dem Build-Schritt (siehe Job-Log)."
+              fi
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
