@@ -34,6 +34,9 @@ class AppState extends ChangeNotifier {
   DateTime? lastQuoteRefresh;
   String? error;
 
+  /// Benutzer-ID der aktuellen Sitzung (vom Auth-Gate gesetzt).
+  String? userId;
+
   PositionFilter filter = PositionFilter.open;
   Set<AssetClass> classFilter = {};
   ThemeMode themeMode = ThemeMode.dark;
@@ -345,6 +348,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> signedOut() async {
+    userId = null;
     stop();
     _positions = [];
     _txns = [];

@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/fx.dart';
 import '../core/models.dart';
+import '../core/notifications.dart';
 
 class PortfolioData {
   const PortfolioData({
@@ -86,6 +87,55 @@ class Repository {
   Future<void> insertSnapshots(List<Map<String, dynamic>> rows) async {
     if (rows.isEmpty) return;
     await _db.from('price_snapshots').insert(rows);
+  }
+
+  // --- Benachrichtigungen (Etappe 2) --------------------------------------
+
+  Future<NotificationSettings?> loadNotificationSettings() async {
+    final row = await _db.from('notification_settings').select().maybeSingle();
+    return row == null ? null : NotificationSettings.fromRow(row);
+  }
+
+  Future<NotificationSettings> saveNotificationSettings(
+      NotificationSettings s, String userId) async {
+    final row = await _db
+        .from('notification_settings')
+        .upsert({
+          ...s.toRow(),
+          'user_id': userId,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .select()
+        .single();
+    return NotificationSettings.fromRow(row);
+  }
+
+  Future<List<AlertEvent>> loadAlertEvents({int limit = 30}) async {
+    final rows =
+        await _db.from('alert_events').select().order('at', ascending: false).limit(limit);
+    return [for (final r in rows) AlertEvent.fromRow(r)];
+  }
+
+  Future<BackendRun?> lastBackendRun() async {
+    final rows = await _db.rpc('last_backend_run');
+    if (rows is List && rows.isNotEmpty) {
+      return BackendRun.fromRow(rows.first as Map<String, dynamic>);
+    }
+    return null;
+  }
+
+  /// Ruft die Edge Function auf, die eine Testnachricht verschickt.
+  /// Gibt die Liste der erfolgreichen Kanäle zurück.
+  Future<List<String>> sendTestNotification() async {
+    final res = await _db.functions.invoke('send-test');
+    final data = res.data;
+    if (data is Map && data['delivered'] is List) {
+      final delivered = [for (final d in data['delivered'] as List) d.toString()];
+      if (delivered.isNotEmpty) return delivered;
+      final errors = [for (final e in (data['errors'] as List? ?? [])) e.toString()];
+      throw Exception(errors.isEmpty ? 'Keine Zustellung' : errors.join('; '));
+    }
+    throw Exception('Unerwartete Antwort: $data');
   }
 
   // --- Lokaler Lese-Cache --------------------------------------------------

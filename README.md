@@ -11,7 +11,7 @@ Lifecycle Kauf → Verkauf, FIFO-PnL in EUR, Trade-Cards mit Sparkline.
 | Etappe | Inhalt | Status |
 |---|---|---|
 | 1 – MVP | Manuelle Erfassung, FIFO, realisierte/unrealisierte PnL, EUR-Umrechnung, Kurse (LS/onvista/CoinGecko/EZB), Cards + Sparkline, Dark Mode, Supabase + RLS | ✅ |
-| 2 – Alerts | Kursabfrage im Backend (pg_cron → Edge Function), Telegram + ntfy, Schwellen/Targets/SL/TP, Tages-Snapshot | geplant |
+| 2 – Alerts | Kursabfrage im Backend (pg_cron → Edge Function), Telegram + ntfy, Schwellen/SL/TP, Tagesübersicht, Wächter | ✅ |
 | 3 – Import & Analytics | Trade-Republic-PDF-Import (in der App), Auswertungen nach Asset-Klasse, Haltedauer, Win/Loss | geplant |
 
 ## Aufbau
@@ -21,7 +21,8 @@ lib/core/      reine Logik (FIFO, FX, Bewertung, Formatierung) – ohne Flutter,
 lib/data/      Kursquellen (LS, onvista, CoinGecko, Frankfurter) + Supabase-Repository
 lib/state/     AppState (ChangeNotifier)
 lib/ui/        Oberfläche
-supabase/      SQL-Migrationen (Tabellen, Row Level Security)
+supabase/migrations/  SQL (Tabellen, Row Level Security, Zeitplan)
+supabase/functions/   Edge Functions (Deno/TypeScript): check-prices, send-test
 test/          Unit- und Widget-Tests
 tool/          live_check.dart – prüft, ob die Kursquellen erreichbar sind
 ```
@@ -46,6 +47,9 @@ Release-Build: `flutter build windows --release --dart-define-from-file=env/loca
 
 Tests: `flutter test` · Analyse: `flutter analyze` · Kursquellen: `dart run tool/live_check.dart`
 
+Backend (Deno):
+`deno check supabase/functions/*/index.ts` · `deno test --allow-net supabase/functions/_shared/shared_test.ts`
+
 ## GitHub Actions
 
 * **CI** (jeder Push): `flutter analyze` + `flutter test` auf Linux.
@@ -56,6 +60,24 @@ Tests: `flutter test` · Analyse: `flutter analyze` · Kursquellen: `dart run to
 
 Benötigte Repository-Secrets: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`,
 optional `COINGECKO_DEMO_KEY`.
+
+## Backend (Etappe 2)
+
+`check-prices` holt mehrmals täglich Kurse (Zeitplan über pg_cron + pg_net),
+schreibt Snapshots und verschickt Meldungen über Telegram und/oder ntfy.
+
+* Function-Secrets: `TELEGRAM_BOT_TOKEN`, `CRON_SECRET`, optional `COINGECKO_DEMO_KEY`.
+  `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` setzt Supabase selbst.
+* Schwellen: je Position „Meldung ab Gewinn/Verlust %“ sowie Stop-Loss und
+  Take-Profit. Jede Meldung kommt einmal und erst wieder, wenn die Schwelle
+  zwischendurch unterschritten wurde (`alert_state`).
+* Ruhezeiten und „Beträge mitschicken“ stellst du in der App ein.
+* `backend_runs` protokolliert jeden Lauf; der Keep-alive-Workflow schlägt Alarm,
+  wenn länger als 26 Stunden kein Lauf stattgefunden hat.
+
+Die FIFO-Logik existiert doppelt (Dart in `lib/core/fifo.dart`, TypeScript in
+`supabase/functions/_shared/fifo.ts`). Beide Seiten haben dieselben Testfälle –
+bei Änderungen bitte beides anpassen.
 
 ## Kursquellen & Grenzen
 

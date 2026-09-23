@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../state/app_scope.dart';
+import 'notifications_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -43,6 +44,15 @@ class SettingsPage extends StatelessWidget {
                 subtitle: const Text('Ohne Sparklines, z. B. für den Zweitbildschirm'),
                 value: state.compact,
                 onChanged: (_) => state.toggleCompact(),
+              ),
+              label('Meldungen'),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Benachrichtigungen'),
+                subtitle: const Text('Telegram, ntfy, Ruhezeiten, Verlauf'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const NotificationsPage())),
               ),
               label('Tastenkürzel (Windows)'),
               Text(

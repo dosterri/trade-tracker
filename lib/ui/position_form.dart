@@ -40,12 +40,15 @@ class _PositionFormPageState extends State<PositionFormPage> {
   final _barrier = TextEditingController();
   final _ratio = TextEditingController();
   final _issuer = TextEditingController();
+  final _alertUp = TextEditingController();
+  final _alertDown = TextEditingController();
   final _notes = TextEditingController();
   final _qty = TextEditingController();
   final _price = TextEditingController();
   final _fees = TextEditingController(text: '1');
   final _fx = TextEditingController();
 
+  bool _alertsEnabled = true;
   bool _searching = false;
   bool _saving = false;
   bool _loadingFx = false;
@@ -75,6 +78,9 @@ class _PositionFormPageState extends State<PositionFormPage> {
       _ratio.text = numText(p.ratio);
       _issuer.text = p.issuer ?? '';
       _notes.text = p.notes ?? '';
+      _alertUp.text = numText(p.alertUpPct);
+      _alertDown.text = numText(p.alertDownPct);
+      _alertsEnabled = p.alertsEnabled;
     }
   }
 
@@ -83,6 +89,7 @@ class _PositionFormPageState extends State<PositionFormPage> {
     for (final c in [
       _search, _name, _isin, _symbol, _manual, _sl, _tp, _underlying, _strike,
       _barrier, _ratio, _issuer, _notes, _qty, _price, _fees, _fx,
+      _alertUp, _alertDown,
     ]) {
       c.dispose();
     }
@@ -183,6 +190,9 @@ class _PositionFormPageState extends State<PositionFormPage> {
           : (manual == old?.manualPrice ? old?.manualPriceAt : DateTime.now()),
       stopLoss: parseNum(_sl.text),
       takeProfit: parseNum(_tp.text),
+      alertUpPct: parseNum(_alertUp.text),
+      alertDownPct: parseNum(_alertDown.text),
+      alertsEnabled: _alertsEnabled,
       derivativeType: derivative ? _dType : null,
       underlying: derivative ? _nz(_underlying) : null,
       strike: derivative ? parseNum(_strike.text) : null,
@@ -424,6 +434,27 @@ class _PositionFormPageState extends State<PositionFormPage> {
                   pair(
                     NumField(controller: _sl, label: 'Stop-Loss', suffix: _currency),
                     NumField(controller: _tp, label: 'Take-Profit', suffix: _currency),
+                  ),
+                  section('Meldungen'),
+                  pair(
+                    NumField(
+                        controller: _alertUp, label: 'Meldung ab Gewinn',
+                        suffix: '%', positive: true, helper: 'z. B. 10'),
+                    NumField(
+                        controller: _alertDown, label: 'Meldung ab Verlust',
+                        suffix: '%', positive: true, helper: 'z. B. 5'),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Meldungen für diese Position'),
+                    value: _alertsEnabled,
+                    onChanged: (v) => setState(() => _alertsEnabled = v),
+                  ),
+                  Text(
+                    'Die Schwellen beziehen sich auf den unrealisierten Gewinn bzw. '
+                    'Verlust gegenüber dem Einstand. Jede Meldung kommt einmal und '
+                    'erst wieder, wenn die Schwelle zwischendurch unterschritten war.',
+                    style: t.bodySmall,
                   ),
                   if (!_editing) ...[
                     section('Kauf'),

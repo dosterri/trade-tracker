@@ -1,7 +1,7 @@
 # Verhindert, dass Supabase (Gratis-Tarif) das Projekt nach 7 Tagen
 # Inaktivität pausiert. Ruft täglich eine harmlose Funktion ohne Nutzerdaten auf.
 # Schlägt der Aufruf fehl, schickt GitHub dir eine E-Mail.
-name: Supabase Keep-alive
+name: Supabase Keep-alive & Wächter
 
 on:
   schedule:
@@ -31,3 +31,19 @@ jobs:
           echo "HTTP $code: $(cat body.txt)"
           echo "Supabase Keep-alive: HTTP $code" >> "$GITHUB_STEP_SUMMARY"
           [ "$code" = "200" ]
+
+      - name: Läuft der Hintergrunddienst noch?
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          body=$(curl -s -X POST "$SUPABASE_URL/rest/v1/rpc/last_backend_run"             -H "apikey: $SUPABASE_PUBLISHABLE_KEY"             -H "Content-Type: application/json" -d '{}')
+          echo "$body"
+          minutes=$(printf '%s' "$body" | grep -oE '"minutes_ago":[0-9.]+' | head -1 | cut -d: -f2)
+          if [ -z "$minutes" ]; then
+            echo "Noch kein Lauf protokolliert – Zeitplan (0003_cron.sql) schon eingerichtet?"               >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "Letzter Lauf vor $minutes Minuten" >> "$GITHUB_STEP_SUMMARY"
+          # Über 26 Stunden ohne Lauf: etwas stimmt nicht → Job rot, GitHub mailt.
+          awk -v m="$minutes" 'BEGIN { exit (m > 1560) ? 1 : 0 }'

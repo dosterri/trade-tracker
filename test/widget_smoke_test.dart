@@ -7,11 +7,13 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:trade_tracker/core/fx.dart';
 import 'package:trade_tracker/core/models.dart';
+import 'package:trade_tracker/core/notifications.dart';
 import 'package:trade_tracker/data/quote_sources.dart';
 import 'package:trade_tracker/data/repository.dart';
 import 'package:trade_tracker/state/app_scope.dart';
 import 'package:trade_tracker/state/app_state.dart';
 import 'package:trade_tracker/ui/home_page.dart';
+import 'package:trade_tracker/ui/notifications_page.dart';
 import 'package:trade_tracker/ui/position_detail.dart';
 import 'package:trade_tracker/ui/position_form.dart';
 import 'package:trade_tracker/ui/theme.dart';
@@ -63,6 +65,33 @@ class FakeRepo extends Repository {
 
   @override
   Future<void> insertSnapshots(List<Map<String, dynamic>> rows) async {}
+
+  NotificationSettings settings = const NotificationSettings(
+      telegramEnabled: true, telegramChatId: '12345678');
+
+  @override
+  Future<NotificationSettings?> loadNotificationSettings() async => settings;
+
+  @override
+  Future<NotificationSettings> saveNotificationSettings(
+      NotificationSettings s, String userId) async {
+    settings = s;
+    return s;
+  }
+
+  @override
+  Future<List<AlertEvent>> loadAlertEvents({int limit = 30}) async => [
+        AlertEvent(
+            id: 1,
+            kind: 'up',
+            message: '📈 SAP SE +10,20 % – Kurs 187,40 €',
+            at: DateTime(2026, 9, 22, 15, 45),
+            delivered: const ['telegram']),
+      ];
+
+  @override
+  Future<BackendRun?> lastBackendRun() async =>
+      BackendRun(kind: 'check', at: DateTime.now(), minutesAgo: 12);
   @override
   Future<void> writeCache({
     required List<Position> positions,
@@ -141,6 +170,20 @@ void main() {
       await tester.scrollUntilVisible(find.text('Knock-out-Schwelle'), 200);
       await tester.scrollUntilVisible(find.text('TRANSAKTIONEN'), 200);
       expect(find.text('TRANSAKTIONEN'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Benachrichtigungen rendern ($label)', (tester) async {
+      final state = await pumpApp(tester, size, () => const NotificationsPage());
+      state.userId = 'u1';
+      await tester.pumpAndSettle();
+      expect(find.text('Chat-ID'), findsOneWidget);
+      // Die Seite hat mehrere Scrollables (Dropdowns), daher die ListView gezielt.
+      final list = find.byType(Scrollable).first;
+      await tester.scrollUntilVisible(find.text('Testnachricht senden'), 200,
+          scrollable: list);
+      await tester.scrollUntilVisible(find.textContaining('SAP SE'), 200,
+          scrollable: list);
       expect(tester.takeException(), isNull);
     });
 

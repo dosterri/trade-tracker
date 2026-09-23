@@ -84,14 +84,19 @@ class _AuthGateState extends State<_AuthGate> with WidgetsBindingObserver {
     _session = auth.currentSession;
     if (_session != null) _startLater();
     _sub = auth.onAuthStateChange.listen((e) {
+      if (!mounted) return;
       final had = _session != null;
       setState(() => _session = e.session);
+      AppScope.read(context).userId = e.session?.user.id;
       if (!had && e.session != null) _startLater();
     });
   }
 
-  void _startLater() => WidgetsBinding.instance
-      .addPostFrameCallback((_) => AppScope.read(context).start());
+  void _startLater() => WidgetsBinding.instance.addPostFrameCallback((_) {
+        final state = AppScope.read(context);
+        state.userId = Supabase.instance.client.auth.currentUser?.id;
+        state.start();
+      });
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState s) {

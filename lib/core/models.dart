@@ -81,6 +81,9 @@ class Position {
     this.manualPriceAt,
     this.stopLoss,
     this.takeProfit,
+    this.alertUpPct,
+    this.alertDownPct,
+    this.alertsEnabled = true,
     this.derivativeType,
     this.underlying,
     this.strike,
@@ -111,6 +114,13 @@ class Position {
   final double? stopLoss;
   final double? takeProfit;
 
+  /// Meldung, wenn der unrealisierte Gewinn diesen Prozentwert erreicht (z. B. 10).
+  final double? alertUpPct;
+
+  /// Meldung, wenn der unrealisierte Verlust diesen Prozentwert erreicht (z. B. 5).
+  final double? alertDownPct;
+  final bool alertsEnabled;
+
   final DerivativeType? derivativeType;
   final String? underlying;
   final double? strike;
@@ -134,6 +144,9 @@ class Position {
         manualPriceAt: _date(r['manual_price_at']),
         stopLoss: _numOrString(r['stop_loss']),
         takeProfit: _numOrString(r['take_profit']),
+        alertUpPct: _numOrString(r['alert_up_pct']),
+        alertDownPct: _numOrString(r['alert_down_pct']),
+        alertsEnabled: (r['alerts_enabled'] as bool?) ?? true,
         derivativeType: DerivativeType.parse(r['derivative_type'] as String?),
         underlying: r['underlying'] as String?,
         strike: _numOrString(r['strike']),
@@ -159,6 +172,9 @@ class Position {
         'manual_price_at': manualPriceAt?.toUtc().toIso8601String(),
         'stop_loss': stopLoss,
         'take_profit': takeProfit,
+        'alert_up_pct': alertUpPct,
+        'alert_down_pct': alertDownPct,
+        'alerts_enabled': alertsEnabled,
         'derivative_type': derivativeType?.name,
         'underlying': underlying,
         'strike': strike,

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:trade_tracker/core/format.dart';
 import 'package:trade_tracker/core/models.dart';
+import 'package:trade_tracker/core/notifications.dart';
 import 'package:trade_tracker/data/quote_sources.dart';
 
 // Gekürzte Original-Antworten der Quellen (Stand 22.09.2026).
@@ -145,6 +146,39 @@ void main() {
       expect(back.expiry, DateTime(2027, 3, 19));
       expect(back.ratio, 0.1);
       expect(back.priceSource, PriceSource.onvista);
+    });
+
+    test('Alarm-Schwellen überleben den Roundtrip', () {
+      const p = Position(
+        id: 'x',
+        assetClass: AssetClass.stock,
+        name: 'SAP',
+        alertUpPct: 10,
+        alertDownPct: 5,
+        alertsEnabled: false,
+      );
+      final back = Position.fromRow(p.toCache());
+      expect(back.alertUpPct, 10);
+      expect(back.alertDownPct, 5);
+      expect(back.alertsEnabled, isFalse);
+    });
+
+    test('Benachrichtigungs-Einstellungen: leere Felder werden zu null', () {
+      const s = NotificationSettings(
+          telegramEnabled: true, telegramChatId: '  ', ntfyTopic: 'tt-abc');
+      final row = s.toRow();
+      expect(row['telegram_chat_id'], isNull);
+      expect(row['ntfy_topic'], 'tt-abc');
+      expect(s.anyChannel, isFalse);
+
+      final back = NotificationSettings.fromRow({
+        ...row,
+        'telegram_chat_id': '999',
+        'ntfy_enabled': true,
+      });
+      expect(back.telegramChatId, '999');
+      expect(back.anyChannel, isTrue);
+      expect(back.quietFrom, 22);
     });
 
     test('Supabase liefert numeric teils als String', () {
