@@ -43,31 +43,37 @@ class _NotificationsPageState extends State<NotificationsPage> {
     super.dispose();
   }
 
+  /// Jeder Teil wird einzeln geladen: Fehlt im Backend noch etwas (z. B. eine
+  /// Migration), bleibt der Rest der Seite trotzdem bedienbar.
   Future<void> _load() async {
     final repo = AppScope.read(context).repo;
-    try {
-      final results = await Future.wait([
-        repo.loadNotificationSettings(),
-        repo.loadAlertEvents(),
-        repo.lastBackendRun(),
-      ]);
-      if (!mounted) return;
-      setState(() {
-        _s = (results[0] as NotificationSettings?) ?? const NotificationSettings();
-        _events = results[1] as List<AlertEvent>;
-        _lastRun = results[2] as BackendRun?;
-        _chatId.text = _s.telegramChatId ?? '';
-        _topic.text = _s.ntfyTopic ?? '';
-        _server.text = _s.ntfyServer;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = '$e';
-        _loading = false;
-      });
+    final problems = <String>[];
+
+    Future<T?> attempt<T>(String what, Future<T> Function() run) async {
+      try {
+        return await run();
+      } catch (e) {
+        problems.add('$what: $e');
+        return null;
+      }
     }
+
+    final settings =
+        await attempt('Einstellungen', repo.loadNotificationSettings);
+    final events = await attempt('Verlauf', repo.loadAlertEvents);
+    final run = await attempt('Hintergrunddienst', repo.lastBackendRun);
+
+    if (!mounted) return;
+    setState(() {
+      _s = settings ?? const NotificationSettings();
+      _events = events ?? const [];
+      _lastRun = run;
+      _chatId.text = _s.telegramChatId ?? '';
+      _topic.text = _s.ntfyTopic ?? '';
+      _server.text = _s.ntfyServer;
+      _error = problems.isEmpty ? null : problems.join('\n');
+      _loading = false;
+    });
   }
 
   Future<void> _save({bool silent = false}) async {
