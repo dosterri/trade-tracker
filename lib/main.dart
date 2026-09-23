@@ -6,6 +6,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'config.dart';
 import 'data/quote_sources.dart';
 import 'data/repository.dart';
 import 'state/app_scope.dart';
@@ -14,17 +15,12 @@ import 'ui/auth_page.dart';
 import 'ui/home_page.dart';
 import 'ui/theme.dart';
 
-// Werte kommen per --dart-define-from-file=env/local.json (nie ins Repo).
-const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-const supabaseKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
-const coinGeckoKey = String.fromEnvironment('COINGECKO_DEMO_KEY');
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Intl.defaultLocale = 'de_DE';
   await initializeDateFormatting('de_DE');
 
-  if (supabaseUrl.isEmpty || supabaseKey.isEmpty) {
+  if (!hasConfig) {
     runApp(const _Shell(child: MissingConfigPage()));
     return;
   }

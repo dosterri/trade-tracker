@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config.dart';
+
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
 
@@ -101,6 +103,9 @@ class _AuthPageState extends State<AuthPage> {
                       const SizedBox(height: 12),
                       Text(_message!, style: t.bodySmall),
                     ],
+                    const SizedBox(height: 24),
+                    Text('Server: $supabaseHost',
+                        style: t.labelSmall, textAlign: TextAlign.center),
                   ],
                 ),
               ),
