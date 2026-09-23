@@ -1,0 +1,135 @@
+Trade Republic Bank GmbH
+Brunnenstraße 19-21
+10119 Berlin
+www.traderepublic.com
+Sitz der Gesellschaft: Berlin
+AG Charlottenburg HRB 244347 B
+Umsatzsteuer-ID DE307510626
+Geschäftsführer
+Andreas Torner
+Gernot Mittendorfer
+Christian Hecker
+Thomas Pischke
+TRADE REPUBLIC BANK GMBH
+ 
+ 
+BRUNNENSTRASSE 19-21
+10119 BERLIN
+SEITE
+1 von 2
+DATUM
+14.09.2026
+AUFTRAG
+50f2-21f6
+AUSFÜHRUNG
+e096-725b
+DEPOT
+0000000000
+WERTPAPIERABRECHNUNG
+ÜBERSICHT
+Market-Order Verkauf am 14.09.2026, um 16:03 Uhr mit Bestpreis unter allen relevanten Börsen gegen Trade Republic Bank GmbH (MIC: TRBX)
+POSITION
+ANZAHL
+PREIS
+BETRAG
+Seagate Technology
+ISIN: IE00BKVD2N49
+0,638839 Stk.
+686,00 EUR
+438,24 EUR
+GESAMT
+438,24 EUR
+ABRECHNUNG
+POSITION
+BETRAG
+Abwicklungspauschale
+-1,00 EUR
+Kapitalertragsteuer
+-76,66 EUR
+Kirchensteuer
+-6,13 EUR
+Solidaritätszuschlag
+-4,21 EUR
+GESAMT
+350,24 EUR
+BUCHUNG
+VERRECHNUNGSKONTO
+WERTSTELLUNG
+BETRAG
+DE00000000000000000000
+2026-09-16
+350,24 EUR
+Diese Abrechnung wird maschinell erstellt und daher nicht unterschrieben.
+Max Mustermann
+Musterweg 1
+12345 Musterstadt
+
+Trade Republic Bank GmbH
+Brunnenstraße 19-21
+10119 Berlin
+www.traderepublic.com
+Sitz der Gesellschaft: Berlin
+AG Charlottenburg HRB 244347 B
+Umsatzsteuer-ID DE307510626
+Geschäftsführer
+Andreas Torner
+Gernot Mittendorfer
+Christian Hecker
+Thomas Pischke
+TRADE REPUBLIC BANK GMBH
+ 
+ 
+BRUNNENSTRASSE 19-21
+10119 BERLIN
+SEITE
+2 von 2
+DATUM
+14.09.2026
+AUFTRAG
+50f2-21f6
+AUSFÜHRUNG
+e096-725b
+DEPOT
+0000000000
+STEUERLICHE BEHANDLUNG
+BERECHNUNG DER STEUERBEMESSUNGSGRUNDLAGE
+BETRAG
+Bruttogewinn
+312,79 EUR
+STEUERBEMESSUNGSGRUNDLAGE
+312,79 EUR
+BERECHNUNG DER STEUERN
+BETRAG
+Steuerbemessungsgrundlage
+312,79 EUR
+Kapitalertragsteuer
+-76,66 EUR
+Kirchensteuer
+-6,13 EUR
+Solidaritätszuschlag
+-4,21 EUR
+GESAMTE STEUERN
+87,00 EUR
+VERRECHNUNGSTÖPFE
+VORHER
+VERÄNDERUNG
+NACHHER
+Verlustverrechnungstopf Aktien
+0,00 EUR
+0,00 EUR
+0,00 EUR
+Verlustverrechnungstopf Allgemein
+0,00 EUR
+0,00 EUR
+0,00 EUR
+Freistellungsauftrag
+0,00 EUR
+0,00 EUR
+0,00 EUR
+Quellensteuertopf
+0,00 EUR
+0,00 EUR
+0,00 EUR
+Max Mustermann
+Musterweg 1
+12345 Musterstadt

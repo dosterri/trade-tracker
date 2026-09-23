@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/fifo.dart';
+import '../core/import_plan.dart';
 import '../core/fx.dart';
 import '../core/models.dart';
 import '../core/portfolio.dart';
@@ -345,6 +346,37 @@ class AppState extends ChangeNotifier {
     await repo.deleteTxn(t.id);
     _txns = _txns.where((x) => x.id != t.id).toList();
     _rebuild();
+  }
+
+  /// Bereits importierte Abrechnungen (zum Erkennen von Doppel-Importen).
+  Set<String> get externalRefs => {
+        for (final t in _txns)
+          if (t.externalRef != null) t.externalRef!,
+      };
+
+  /// Bucht einen geprüften Importplan. Legt bei Bedarf die Position an.
+  Future<void> applyImport(ImportPlan plan) async {
+    _ensureOnline();
+    final txn = plan.txn;
+    if (txn == null || !plan.canImport) {
+      throw StateError('Dieser Eintrag kann nicht importiert werden.');
+    }
+    if (plan.status == ImportStatus.newPosition) {
+      await createPosition(positionFromImport(plan.item!), txn);
+      return;
+    }
+    await addTxn(Txn(
+      id: '',
+      positionId: plan.target!.id,
+      side: txn.side,
+      quantity: txn.quantity,
+      price: txn.price,
+      fees: txn.fees,
+      taxes: txn.taxes,
+      fxRate: txn.fxRate,
+      executedAt: txn.executedAt,
+      externalRef: txn.externalRef,
+    ));
   }
 
   Future<void> signedOut() async {

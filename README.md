@@ -12,7 +12,7 @@ Lifecycle Kauf → Verkauf, FIFO-PnL in EUR, Trade-Cards mit Sparkline.
 |---|---|---|
 | 1 – MVP | Manuelle Erfassung, FIFO, realisierte/unrealisierte PnL, EUR-Umrechnung, Kurse (LS/onvista/CoinGecko/EZB), Cards + Sparkline, Dark Mode, Supabase + RLS | ✅ |
 | 2 – Alerts | Kursabfrage im Backend (pg_cron → Edge Function), Telegram + ntfy, Schwellen/SL/TP, Tagesübersicht, Wächter | ✅ |
-| 3 – Import & Analytics | Trade-Republic-PDF-Import (in der App), Auswertungen nach Asset-Klasse, Haltedauer, Win/Loss | geplant |
+| 3 – Import & Analytics | Trade-Republic-PDF-Import (in der App), Auswertungen nach Anlageklasse, Haltedauer, Trefferquote | ✅ |
 
 ## Aufbau
 
@@ -78,6 +78,25 @@ schreibt Snapshots und verschickt Meldungen über Telegram und/oder ntfy.
 Die FIFO-Logik existiert doppelt (Dart in `lib/core/fifo.dart`, TypeScript in
 `supabase/functions/_shared/fifo.ts`). Beide Seiten haben dieselben Testfälle –
 bei Änderungen bitte beides anpassen.
+
+## PDF-Import (Etappe 3)
+
+* Läuft vollständig auf dem Gerät: `pdfrx` liest den Text, `lib/core/tr_parser.dart`
+  wertet ihn aus. Die PDFs werden nicht hochgeladen, gespeichert werden nur die
+  erkannten Buchungen.
+* Erkannt werden Wertpapierabrechnungen (Kauf/Verkauf) mit ISIN, Stückzahl, Kurs,
+  Gebühren, Steuern und Zeitpunkt. Kosteninformationen und Dividenden werden
+  erkannt, aber nicht gebucht.
+* Doppelte Importe verhindert `transactions.external_ref`
+  (`tr:<Ausführungs-ID>:<Seite>:<ISIN>`, je Nutzer eindeutig).
+* Je nach Textextraktion stehen Beschriftung und Wert in einer Zeile oder
+  untereinander – der Parser normalisiert beides. Beide Varianten sind als
+  Testdaten in `test/fixtures/` hinterlegt (anonymisiert).
+* Ein Verkauf ohne passende Position wird abgelehnt, sonst entstünde ein
+  Bestand unter null.
+
+Zum Prüfen einer einzelnen Datei:
+`dart run tool/pdf_probe.dart "C:\Pfad\zur\Abrechnung.pdf"`
 
 ## Kursquellen & Grenzen
 

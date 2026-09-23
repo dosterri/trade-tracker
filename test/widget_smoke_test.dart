@@ -13,6 +13,8 @@ import 'package:trade_tracker/data/repository.dart';
 import 'package:trade_tracker/state/app_scope.dart';
 import 'package:trade_tracker/state/app_state.dart';
 import 'package:trade_tracker/ui/home_page.dart';
+import 'package:trade_tracker/ui/analytics_page.dart';
+import 'package:trade_tracker/ui/import_page.dart';
 import 'package:trade_tracker/ui/notifications_page.dart';
 import 'package:trade_tracker/ui/position_detail.dart';
 import 'package:trade_tracker/ui/position_form.dart';
@@ -170,6 +172,21 @@ void main() {
       await tester.scrollUntilVisible(find.text('Knock-out-Schwelle'), 200);
       await tester.scrollUntilVisible(find.text('TRANSAKTIONEN'), 200);
       expect(find.text('TRANSAKTIONEN'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Auswertung rendert ($label)', (tester) async {
+      await pumpApp(tester, size, () => const AnalyticsPage());
+      expect(find.text('Nach Anlageklasse'.toUpperCase()), findsOneWidget);
+      final list = find.byType(Scrollable).first;
+      await tester.scrollUntilVisible(find.text('Trefferquote'), 200, scrollable: list);
+      await tester.scrollUntilVisible(find.text('Ø gesamt'), 200, scrollable: list);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('PDF-Import rendert ($label)', (tester) async {
+      await pumpApp(tester, size, () => const ImportPage());
+      expect(find.text('PDF-Dateien auswählen'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 

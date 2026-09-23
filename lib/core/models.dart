@@ -218,6 +218,7 @@ class Txn {
     this.fees = 0,
     this.taxes = 0,
     this.fxRate = 1,
+    this.externalRef,
   });
 
   final String id;
@@ -238,6 +239,10 @@ class Txn {
   final double fxRate;
   final DateTime executedAt;
 
+  /// Herkunft beim Import (z. B. `tr:<Ausführungs-ID>:sell:<ISIN>`).
+  /// Verhindert doppelte Buchungen aus derselben Abrechnung.
+  final String? externalRef;
+
   factory Txn.fromRow(Map<String, dynamic> r) => Txn(
         id: r['id'] as String,
         positionId: r['position_id'] as String,
@@ -248,6 +253,7 @@ class Txn {
         taxes: _numOrString(r['taxes']) ?? 0,
         fxRate: _numOrString(r['fx_rate']) ?? 1,
         executedAt: DateTime.parse(r['executed_at'] as String),
+        externalRef: r['external_ref'] as String?,
       );
 
   Map<String, dynamic> toRow() => {
@@ -260,6 +266,7 @@ class Txn {
         'taxes': taxes,
         'fx_rate': fxRate,
         'executed_at': executedAt.toUtc().toIso8601String(),
+        if (externalRef != null) 'external_ref': externalRef,
       };
 }
 

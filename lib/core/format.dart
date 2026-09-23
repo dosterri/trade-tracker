@@ -21,6 +21,10 @@ String fmtPct(double? ratio) {
   return '${v > 0 ? '+' : ''}${_pct.format(v)} %';
 }
 
+/// Quote ohne Vorzeichen, z. B. Trefferquote: "62,50 %".
+String fmtRate(double? ratio) =>
+    ratio == null ? '–' : '${_pct.format(ratio * 100)} %';
+
 /// Stückpreis: kleine Werte (Derivate, Krypto) mit mehr Nachkommastellen.
 String fmtPrice(double? v, [String currency = 'EUR']) {
   if (v == null) return '–';

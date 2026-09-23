@@ -118,6 +118,9 @@ void main() {
       expect(fmtEur(12, signed: true), '+12,00 €');
       expect(fmtPct(0.1234), '+12,34 %');
       expect(fmtPct(-0.05), '-5,00 %');
+      // Quoten ohne Vorzeichen
+      expect(fmtRate(1), '100,00 %');
+      expect(fmtRate(null), '–');
     });
 
     test('kleine Kurse mit mehr Stellen', () {

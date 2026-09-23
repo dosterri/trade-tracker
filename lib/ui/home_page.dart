@@ -6,6 +6,8 @@ import '../core/models.dart';
 import '../core/portfolio.dart';
 import '../state/app_scope.dart';
 import '../state/app_state.dart';
+import 'analytics_page.dart';
+import 'import_page.dart';
 import 'position_detail.dart';
 import 'position_form.dart';
 import 'settings_page.dart';
@@ -22,6 +24,12 @@ class HomePage extends StatelessWidget {
 
   static void openSettings(BuildContext context) => Navigator.push(
       context, MaterialPageRoute(builder: (_) => const SettingsPage()));
+
+  static void openAnalytics(BuildContext context) => Navigator.push(
+      context, MaterialPageRoute(builder: (_) => const AnalyticsPage()));
+
+  static void openImport(BuildContext context) => Navigator.push(
+      context, MaterialPageRoute(builder: (_) => const ImportPage()));
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +55,10 @@ class HomePage extends StatelessWidget {
             state.setFilter(PositionFilter.all),
         const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
             openSettings(context),
+        const SingleActivator(LogicalKeyboardKey.keyI, control: true): () =>
+            openImport(context),
+        const SingleActivator(LogicalKeyboardKey.keyA, control: true): () =>
+            openAnalytics(context),
       },
       child: Focus(
         autofocus: true,
@@ -70,6 +82,16 @@ class HomePage extends StatelessWidget {
                 tooltip: state.compact ? 'Normale Ansicht (Strg+K)' : 'Kompakte Ansicht (Strg+K)',
                 icon: Icon(state.compact ? Icons.view_agenda_outlined : Icons.view_headline),
                 onPressed: state.toggleCompact,
+              ),
+              IconButton(
+                tooltip: 'Auswertung (Strg+A)',
+                icon: const Icon(Icons.insights_outlined),
+                onPressed: () => openAnalytics(context),
+              ),
+              IconButton(
+                tooltip: 'PDF-Import (Strg+I)',
+                icon: const Icon(Icons.file_upload_outlined),
+                onPressed: () => openImport(context),
               ),
               IconButton(
                 tooltip: 'Einstellungen',
